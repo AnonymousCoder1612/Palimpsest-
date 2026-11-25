@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="nocturne">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE PALIMPSEST — Cabinet of Curiosities & Illuminated Folios</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Google Fonts: Cormorant Garamond, Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+                        sans: ['"Inter"', 'system-ui', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* =====================================================================
+           THEME TOKENS: NOCTURNE (Obsidian & Brass) vs PARCHMENT (Daylight)
+           ===================================================================== */
+        :root, [data-theme="nocturne"] {
+            --bg-primary: #0e0d0b;
+            --bg-surface: #13120f;
+            --bg-surface-hover: #171511;
+            --bg-elevated: #1c1a15;
+            --bg-input: #0f0e0c;
+            --border-primary: rgba(197, 168, 120, 0.22);
+            --border-hover: rgba(197, 168, 120, 0.48);
+            --border-dashed: rgba(197, 168, 120, 0.16);
+            --bracket-color: rgba(197, 168, 120, 0.42);
+            --accent-gold: #c5a878;
+            --accent-gold-bright: #dfd0b4;
+            --accent-gold-dim: rgba(197, 168, 120, 0.12);
+            --accent-crimson: #b55447;
+            --accent-emerald: #6fa37b;
+            --text-primary: #ede6d6;
+            --text-secondary: #a19580;
+            --text-muted: #6e6454;
+            --svg-stroke: rgba(197, 168, 120, 0.34);
+            --scrollbar-thumb: #2e2920;
+            --scrollbar-hover: #4a4233;
+        }
+
+        [data-theme="parchment"] {
+            --bg-primary: #f5f0e6;
+            --bg-surface: #fbf8f1;
+            --bg-surface-hover: #f2ebe0;
+            --bg-elevated: #ece3d3;
+            --bg-input: #f7f3ea;
+            --border-primary: rgba(139, 105, 20, 0.24);
+            --border-hover: rgba(139, 105, 20, 0.55);
+            --border-dashed: rgba(139, 105, 20, 0.22);
+            --bracket-color: rgba(139, 105, 20, 0.45);
+            --accent-gold: #8b6914;
+            --accent-gold-bright: #5e4509;
+            --accent-gold-dim: rgba(139, 105, 20, 0.1);
+            --accent-crimson: #9e3d30;
+            --accent-emerald: #3d754c;
+            --text-primary: #241e18;
+            --text-secondary: #5c5142;
+            --text-muted: #8c7e6b;
+            --svg-stroke: rgba(139, 105, 20, 0.36);
+            --scrollbar-thumb: #d1c4ad;
+            --scrollbar-hover: #b3a386;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--scrollbar-hover);
+        }
+
+        /* Archival Bento Folio Card */
+        .folio-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-primary);
+            transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+        .folio-card:hover {
+            background-color: var(--bg-surface-hover);
+            border-color: var(--border-hover);
+        }
+
+        /* Top-Right Corner L-Bracket Accent */
+        .corner-bracket-tr {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 11px;
+            height: 11px;
+            border-top: 1px solid var(--bracket-color);
+            border-right: 1px solid var(--bracket-color);
+            pointer-events: none;
+            transition: border-color 0.25s ease;
+        }
+        .folio-card:hover .corner-bracket-tr {
+            border-color: var(--accent-gold);
+        }
+
+        /* Inner Dashed Chamber Frame */
+        .dashed-chamber {
+            border: 1px dashed var(--border-dashed);
+            transition: border-color 0.25s ease;
+        }
+        .folio-card:hover .dashed-chamber {
+            border-color: var(--bracket-color);
+        }
+
+        /* Sacred Geometry SVG Line Styling */
+        .sacred-svg line,
+        .sacred-svg circle,
+        .sacred-svg ellipse,
+        .sacred-svg polygon,
+        .sacred-svg rect,
+        .sacred-svg path {
+            stroke: var(--svg-stroke);
+            transition: stroke 0.3s ease;
+        }
+        .folio-card:hover .sacred-svg line,
+        .folio-card:hover .sacred-svg circle,
+        .folio-card:hover .sacred-svg ellipse,
+        .folio-card:hover .sacred-svg polygon,
+        .folio-card:hover .sacred-svg rect,
+        .folio-card:hover .sacred-svg path {
+            stroke: var(--accent-gold);
+        }
+
+        /* Top Header Pill Buttons */
+        .archival-btn {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-primary);
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+        .archival-btn:hover {
+            background-color: var(--bg-surface-hover);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold-bright);
+        }
+        .archival-btn-gold {
+            background-color: var(--accent-gold-dim);
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold-bright);
+        }
+        .archival-btn-gold:hover {
+            background-color: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+
+        /* Manuscript Prose & Editor */
+        .manuscript-editor {
+            outline: none;
+            line-height: 1.85;
+            font-size: 1.06rem;
+            color: var(--text-primary);
+        }
+        .manuscript-editor[contenteditable="true"]:empty:before {
+            content: attr(data-placeholder);
+            color: var(--text-muted);
+            pointer-events: none;
+            display: block;
+            font-style: italic;
+        }
+        .manuscript-editor h2 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            line-height: 1.25;
+            color: var(--accent-gold-bright);
+        }
+        .manuscript-editor h3 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.38rem;
+            font-weight: 500;
+            font-style: italic;
+            margin-top: 1.4rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+        .manuscript-editor p {
+            margin-bottom: 1.2rem;
+        }
+        .manuscript-editor blockquote {
+            border-left: 2px solid var(--accent-gold);
+            padding: 0.65rem 1.25rem;
+            margin: 1.5rem 0;
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 1.22rem;
+            font-style: italic;
+            color: var(--text-secondary);
+            background-color: var(--accent-gold-dim);
+        }
+        .manuscript-editor ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-bottom: 1.2rem;
+        }
+        .manuscript-editor ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+            margin-bottom: 1.2rem;
+        }
+        .manuscript-editor hr {
+            border: 0;
+            border-top: 1px dashed var(--border-hover);
+            margin: 2rem auto;
+            width: 45%;
+        }
+
+        /* Double-bordered Illuminated Thesis Box */
+        .illuminated-box {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border-hover);
+            box-shadow: inset 0 0 0 3px var(--bg-primary), inset 0 0 0 4px var(--border-primary);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-[#c5a878]/25 selection:text-[#dfd0b4]">
+
+    <!-- =======================================================================
+         TOP ARCHIVAL HEADER BAR
+         ======================================================================= -->
+    <header class="sticky top-0 z-30 border-b border-[var(--border-primary)] bg-[var(--bg-primary)]/95 backdrop-blur-xs px-4 sm:px-7 py-3.5 flex flex-wrap items-center justify-between gap-3">
+        <!-- Left Brand Mark -->
+        <button onclick="openCabinetView()" class="flex items-center gap-3 text-left group focus:outline-none" title="Return to Cabinet of Curiosities">
+            <div class="w-8 h-8 rounded border border-[var(--border-primary)] group-hover:border-[var(--accent-gold)] bg-[var(--bg-surface)] flex items-center justify-center transition">
+                <svg viewBox="0 0 24 24" class="w-4 h-4 text-[var(--accent-gold)]" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
+            </div>
+            <div>
+                <div class="font-display text-lg sm:text-xl font-semibold tracking-[0.16em] uppercase text-[var(--accent-gold-bright)] leading-none group-hover:text-[var(--text-primary)] transition">
+                    THE PALIMPSEST
+                </div>
+                <div class="font-display italic text-xs sm:text-[13px] text-[var(--text-secondary)] mt-0.5 tracking-wide">
+                    Cabinet of Curiosities &amp; Illuminated Folios
+                </div>
+            </div>
+        </button>
+
+        <!-- Right Archival Controls -->
+        <div class="flex items-center flex-wrap gap-1.5 sm:gap-2">
+            <!-- Cloud Sync Status Badge -->
+            <div id="sync-status-pill" class="flex items-center gap-2 px-3 py-1.5 rounded border border-[var(--border-primary)] bg-[var(--bg-surface)] text-[11px] font-mono text-[var(--text-secondary)] select-none" title="Supabase Live Archive Connection">
+                <span id="sync-dot" class="w-1.5 h-1.5 rounded-full bg-[var(--accent-emerald)]"></span>
+                <span id="sync-label">Live Archive</span>
+            </div>
+
+            <!-- Dedicated Project Proposal Button -->
+            <button onclick="openProposalChamber()" class="archival-btn archival-btn-gold px-3 py-1.5 rounded flex items-center gap-1.5" title="Open Project Proposal Charter">
+                <i data-lucide="compass" class="w-3.5 h-3.5"></i>
+                <span>PROPOSAL</span>
+            </button>
+
+            <!-- Curator Auth Button (Sign In / Curator Active) -->
+            <button id="curator-auth-btn" onclick="handleCuratorButtonClick()" class="archival-btn px-3 py-1.5 rounded flex items-center gap-1.5" title="Curator Authentication">
+                <i id="curator-auth-icon" data-lucide="lock" class="w-3.5 h-3.5 text-[var(--accent-gold)]"></i>
+                <span id="curator-auth-label">CURATOR</span>
+            </button>
+
+            <!-- Add New Essay Plate (Curator Only) -->
+            <button id="header-add-plate-btn" onclick="addNewEssayPlate()" class="hidden archival-btn px-3 py-1.5 rounded flex items-center gap-1.5" title="Inscribe a New Essay Folio">
+                <i data-lucide="plus" class="w-3.5 h-3.5 text-[var(--accent-gold)]"></i>
+                <span>ADD PLATE</span>
+            </button>
+
+            <!-- Export Archive -->
+            <button onclick="openExportModal()" class="archival-btn px-3 py-1.5 rounded flex items-center gap-1.5" title="Export Complete Archive">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span class="hidden sm:inline">EXPORT</span>
+            </button>
+
+            <!-- Theme Toggle (NOCTURNE / PARCHMENT) -->
+            <button id="theme-toggle-btn" onclick="toggleTheme()" class="archival-btn px-3 py-1.5 rounded flex items-center gap-1.5" title="Switch Theme">
+                <i id="theme-icon" data-lucide="moon" class="w-3.5 h-3.5 text-[var(--accent-gold)]"></i>
+                <span id="theme-label">NOCTURNE</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- =======================================================================
+         LOADING OVERLAY (Initial Cloud Fetch)
+         ======================================================================= -->
+    <div id="initial-loader" class="flex-1 flex flex-col items-center justify-center py-24 px-4 text-center">
+        <div class="w-12 h-12 rounded-full border border-[var(--accent-gold)]/40 border-t-[var(--accent-gold)] animate-spin mb-4"></div>
+        <div class="font-display italic text-xl text-[var(--accent-gold-bright)]">Unsealing the Cabinet of Curiosities...</div>
+        <div class="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--text-muted)] mt-1.5">Connecting to Palimpsest Cloud Archive</div>
+    </div>
+
+    <!-- =======================================================================
+         VIEW A: ASYMMETRIC BENTO ARCHIVE GRID (HOME VIEW)
+         ======================================================================= -->
+    <main id="cabinet-view" class="hidden flex-1 w-full max-w-[1540px] mx-auto px-4 sm:px-7 py-6 sm:py-8">
+        
+        <!-- Top Archival Status & Mode Banner -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-5 pb-3 border-b border-[var(--border-primary)]/70">
+            <div class="flex items-center gap-3 text-[11px] font-mono uppercase tracking-[0.15em] text-[var(--text-muted)]">
+                <span id="cabinet-mode-badge" class="text-[var(--accent-gold)]">PUBLIC ARCHIVE • READ-ONLY</span>
+                <span>•</span>
+                <span id="cabinet-count-summary">1 Proposal &amp; 3 Illuminated Folios</span>
+            </div>
+            <div class="text-[11px] font-mono tracking-[0.12em] text-[var(--text-muted)]" id="cabinet-total-words">
+                0 Words Cataloged
+            </div>
+        </div>
+
+        <!-- Pinned Project Proposal Banner Card -->
+        <div id="proposal-banner-container" class="mb-5">
+            <!-- Populated dynamically by renderCabinetGrid() -->
+        </div>
+
+        <!-- Asymmetric Editorial Bento Grid for Essays (Folio I, II, III, IV+) -->
+        <div id="bento-grid-container" class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+            <!-- Populated dynamically by renderCabinetGrid() -->
+        </div>
+    </main>
+
+    <!-- =======================================================================
+         VIEW B1: PROJECT PROPOSAL CHAMBER
+         ======================================================================= -->
+    <section id="proposal-view" class="hidden flex-1 flex flex-col">
+        <!-- Breadcrumb & Quick Switcher Ribbon -->
+        <div class="border-b border-[var(--border-primary)] bg-[var(--bg-surface)] px-4 sm:px-7 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            <button onclick="openCabinetView()" class="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--accent-gold)] hover:text-[var(--accent-gold-bright)] transition">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                <span>Return to Cabinet</span>
+            </button>
+
+            <div id="proposal-switcher-bar" class="flex items-center gap-1.5 overflow-x-auto max-w-full py-0.5">
+                <!-- Populated dynamically -->
+            </div>
+
+            <div class="font-mono text-[11px] text-[var(--text-muted)] tracking-wider">
+                <span id="proposal-word-count" class="text-[var(--accent-gold)]">0</span> WORDS
+            </div>
+        </div>
+
+        <!-- Proposal Chamber Canvas -->
+        <div class="flex-1 overflow-y-auto px-4 sm:px-8 lg:px-12 py-8 sm:py-12">
+            <div class="max-w-3xl mx-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="inline-block px-2.5 py-1 rounded border border-[var(--accent-gold)]/50 bg-[var(--accent-gold-dim)] font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent-gold-bright)]">
+                        PROPOSAL • MASTER CHARTER
+                    </span>
+                    <span class="font-mono text-[11px] text-[var(--text-muted)]" id="proposal-reading-time">1 min read</span>
+                </div>
+
+                <!-- Proposal Title (Editable in Curator Mode, Clean Display in Public Mode) -->
+                <input type="text" id="proposal-title-input" placeholder="Inscribe Proposal Title..." class="w-full bg-transparent font-display text-3xl sm:text-5xl font-medium text-[var(--text-primary)] placeholder:text-[var(--text-muted)]/50 focus:outline-none mb-2 leading-tight">
+                
+                <!-- Proposal Subtitle -->
+                <input type="text" id="proposal-subtitle-input" placeholder="Subtitle or Guiding Research Question..." class="w-full bg-transparent font-display italic text-lg sm:text-xl text-[var(--text-secondary)] placeholder:text-[var(--text-muted)]/50 focus:outline-none mb-6">
+
+                <!-- Illuminated Core Thesis Box -->
+                <div class="illuminated-box rounded p-5 sm:p-6 mb-7">
+                    <div class="flex items-center gap-2 mb-2.5">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[var(--accent-gold)]"></i>
+                        <label for="proposal-thesis-input" class="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent-gold)]">
+                            Core Thesis Statement &amp; Philosophical Stakes
+                        </label>
+                    </div>
+                    <textarea id="proposal-thesis-input" rows="3" placeholder="Articulate the governing thesis and connective thread uniting your essay folios..." class="w-full bg-transparent font-display italic text-lg sm:text-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)]/60 focus:outline-none resize-y leading-relaxed"></textarea>
+                </div>
+
+                <!-- Curator Formatting Toolbar (Hidden in Public Mode) -->
+                <div id="proposal-toolbar" class="hidden sticky top-0 z-10 bg-[var(--bg-primary)]/95 backdrop-blur-xs py-2.5 mb-5 border-y border-[var(--border-primary)] flex items-center justify-between gap-2 flex-wrap">
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="execFormat('bold', 'proposal-body-editor')" class="p-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-surface)] transition" title="Bold"><i data-lucide="bold" class="w-4 h-4"></i></button>
+                        <button type="button" onclick="execFormat('italic', 'proposal-body-editor')" class="p-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-surface)] transition" title="Italic"><i data-lucide="italic" class="w-4 h-4"></i></button>
+                        <div class="w-px h-4 bg-[var(--border-primary)] mx-1"></div>
+                        <button type="button" onclick="execBlock('H2', 'proposal-body-editor')" class="px-2 py-1 rounded font-mono text-xs text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-surface)] transition" title="Major Heading">H2</button>
+                        <button type="button" onclick="execBlock('H3', 'proposal-body-editor')" class="px-2 py-1 rounded font-mono text-xs text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-surface)] transition" title="Subheading">H3</button>
+                        <div class="w-px h-4 bg-[var(--border-primary)] mx-1"></div>
+                        <button type="button" onclick="execBlock('BLOCKQUOTE', 'proposal-body-editor')" class="p-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-surface)] transition" title="Blockquote"><i data-lucide="quote" class="w-4 h-4"></i></button>
+                        <button type="button" onclick="execFormat('insertUnorderedList', 'proposal-body-editor')" class="p-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-surface)] transition" title="Bullet List"><i data-lucide="list" class="w-4 h-4"></i></button>
+                        <button type="button" onclick="insertDivider('proposal-body-editor')" class="p-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-surface)] transition" title="Divider"><i data-lucide="minus" class="w-4 h-4"></i></button>
+                    </div>
+                    <button onclick="saveToSupabaseNow()" class="font-mono text-[11px] uppercase tracking-[0.12em] text-[var(--accent-gold)] hover:text-[var(--accent-gold-bright)]">
+                        Save Now ✓
+                    </button>
+                </div>
+
+                <!-- Proposal Full Manuscript -->
+                <div id="proposal-body-editor" contenteditable="false" data-placeholder="Compose the architectural narrative of your project proposal..." class="manuscript-editor min-h-[260px] pb-10"></div>
+
+                <!-- Proposal Uploaded Files & Primary Sources -->
+                <div class="mt-8 pt-7 border-t border-[var(--border-primary)] pb-20">
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <div class="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent-gold)]">ARCHIVAL ATTACHMENTS</div>
+                            <h3 class="font-display text-2xl text-[var(--text-primary)]">Proposal Documents &amp; Supporting Plates</h3>
+                        </div>
+                        <label id="proposal-upload-label" class="hidden archival-btn archival-btn-gold px-3.5 py-2 rounded cursor-pointer flex items-center gap-2">
+                            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                            <span>Upload File</span>
+                            <input type="file" multiple class="hidden" onchange="handleFileUpload(event, 'proposal')">
+                        </label>
+                    </div>
+                    <div id="proposal-files-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =======================================================================
+         VIEW B2: OPEN ESSAY STUDIO (Split View: Manuscript + Annotations/Notes/Files)
+         ======================================================================= -->
+    <section id="essay-studio-view" class="hidden flex-1 flex flex-col overflow-hidden">
+        <!-- Studio Sub-Header -->
+        <div class="border-b border-[var(--border-primary)] bg-[var(--bg-surface)] px-4 sm:px-7 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+            <button onclick="openCabinetView()" class="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--accent-gold)] hover:text-[var(--accent-gold-bright)] transition">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+                <span>Return to Cabinet</span>
+            </button>
+
+            <!-- Quick Switcher Bar -->
+            <div id="essay-switcher-bar" class="flex items-center gap-1.5 overflow-x-auto max-w-full py-0.5">
+                <!-- Populated dynamically -->
+            </div>
+
+            <!-- Curator Delete Folio Action -->
+            <div class="flex items-center gap-3">
+                <button id="studio-delete-essay-btn" onclick="promptDeleteCurrentEssay()" class="hidden font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)] hover:text-[var(--accent-crimson)] flex items-center gap-1 transition" title="Expunge this Folio">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    <span class="hidden sm:inline">Delete Folio</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Split Workspace Container -->
+        <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            
+            <!-- LEFT / MAIN PANE: MANUSCRIPT & ATTACHED FILES -->
+            <div class="flex-1 flex flex-col overflow-hidden border-b lg:border-b-0 lg:border-r border-[var(--border-primary)] bg-[var(--bg-primary)]">
+                
+                <!-- Curator Formatting Toolbar -->
+                <div id="essay-toolbar" class="hidden px-4 sm:px-8 py-2 bg-[var(--bg-surface)]/75 border-b border-[var(--border-primary)] flex items-center justify-between gap-2 flex-wrap shrink-0">
+                    <div class="flex items-center gap-0.5 sm:gap-1">
+                        <button type="button" onclick="execFormat('bold', 'essay-body-editor')" class="p-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-elevated)] transition" title="Bold"><i data-lucide="bold" class="w-4 h-4"></i></button>
+                        <button type="button" onclick="execFormat('italic', 'essay-body-editor')" class="p-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-elevated)] transition" title="Italic"><i data-lucide="italic" class="w-4 h-4"></i></button>
+                        <div class="w-px h-4 bg-[var(--border-primary)] mx-1"></div>
+                        <button type="button" onclick="execBlock('H2', 'essay-body-editor')" class="px-2 py-1 rounded font-mono text-xs text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-elevated)] transition" title="Section Heading">H2</button>
+                        <button type="button" onclick="execBlock('H3', 'essay-body-editor')" class="px-2 py-1 rounded font-mono text-xs text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-elevated)] transition" title="Subsection Heading">H3</button>
+                        <div class="w-px h-4 bg-[var(--border-primary)] mx-1"></div>
+                        <button type="button" onclick="execBlock('BLOCKQUOTE', 'essay-body-editor')" class="p-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-elevated)] transition" title="Blockquote"><i data-lucide="quote" class="w-4 h-4"></i></button>
+                        <button type="button" onclick="insertDivider('essay-body-editor')" class="p-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--accent-gold-bright)] hover:bg-[var(--bg-elevated)] transition" title="Divider"><i data-lucide="minus" class="w-4 h-4"></i></button>
+                        <div class="w-px h-4 bg-[var(--border-primary)] mx-1"></div>
+                        <button type="button" onclick="citeSelectedText()" class="px-2.5 py-1 rounded border border-[var(--accent-gold)]/40 bg-[var(--accent-gold-dim)] text-[var(--accent-gold-bright)] hover:bg-[var(--accent-gold)] hover:text-[var(--bg-primary)] font-mono text-[10px] uppercase tracking-wider flex items-center gap-1 transition" title="Send highlighted passage into a new Margin Annotation">
+                            <i data-lucide="highlighter" class="w-3 h-3"></i>
+                            <span>Cite Selection</span>
+                        </button>
+                    </div>
+
+                    <div class="font-mono text-[11px] text-[var(--text-muted)] tracking-wider">
+                        <span id="essay-word-count" class="text-[var(--accent-gold)]">0</span> WORDS · <span id="essay-read-time">1m</span>
+                    </div>
+                </div>
+
+                <!-- Scrollable Illuminated Manuscript Sheet -->
+                <div class="flex-1 overflow-y-auto px-5 sm:px-10 lg:px-14 py-8 sm:py-11">
+                    <div class="max-w-2xl mx-auto">
+                        <div class="flex items-center justify-between mb-3">
+                            <span id="studio-folio-badge" class="inline-block px-2.5 py-0.5 rounded border border-[var(--border-primary)] bg-[var(--bg-surface)] font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                                FOLIO I • ARCHIVE
+                            </span>
+                            <span id="public-essay-stats" class="font-mono text-[11px] text-[var(--text-muted)]">0 words</span>
+                        </div>
+
+                        <!-- Author / Rubric Eyebrow -->
+                        <input type="text" id="essay-kicker-input" placeholder="AUTHOR OR ARCHIVAL RUBRIC" class="w-full bg-transparent font-mono text-xs uppercase tracking-[0.18em] text-[var(--accent-gold)] placeholder:text-[var(--text-muted)]/50 focus:outline-none mb-2">
+
+                        <!-- Essay Title -->
+                        <input type="text" id="essay-title-input" placeholder="Untitled Illuminated Folio..." class="w-full bg-transparent font-display text-3xl sm:text-4xl lg:text-[42px] font-medium text-[var(--text-primary)] placeholder:text-[var(--text-muted)]/50 focus:outline-none mb-2 leading-tight">
+
+                        <!-- Italic Subtitle -->
+                        <input type="text" id="essay-subtitle-input" placeholder="Inscribe an italic subtitle or thematic gloss..." class="w-full bg-transparent font-display italic text-lg sm:text-xl text-[var(--text-secondary)] placeholder:text-[var(--text-muted)]/50 focus:outline-none pb-5 mb-7 border-b border-[var(--border-primary)]">
+
+                        <!-- Main Manuscript Body -->
+                        <div id="essay-body-editor" contenteditable="false" data-placeholder="Begin inscribing your manuscript here..." class="manuscript-editor min-h-[280px] pb-12"></div>
+
+                        <!-- Primary Sources & Uploaded Files Section (Always Visible to Visitors, Uploadable by Curator) -->
+                        <div class="mt-8 pt-7 border-t border-[var(--border-primary)] pb-24">
+                            <div class="flex items-center justify-between gap-3 mb-4">
+                                <div>
+                                    <div class="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent-gold)]">PRIMARY SOURCES &amp; PLATES</div>
+                                    <h3 class="font-display text-2xl text-[var(--text-primary)]">Attached Archival Files</h3>
+                                </div>
+                                <label id="essay-upload-label" class="hidden archival-btn archival-btn-gold px-3.5 py-2 rounded cursor-pointer flex items-center gap-2">
+                                    <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                                    <span>Upload File</span>
+                                    <input type="file" multiple class="hidden" onchange="handleFileUpload(event, 'essay')">
+                                </label>
+                            </div>
+                            <div id="essay-main-files-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COMPANION PANE: ANNOTATIONS, NOTES & FILES -->
+            <aside class="w-full lg:w-[410px] xl:w-[450px] h-[48vh] lg:h-auto bg-[var(--bg-surface)] flex flex-col shrink-0">
+                
+                <!-- Component Tabs Header -->
+                <div class="px-5 pt-3.5 border-b border-[var(--border-primary)] flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-5">
+                        <button id="tab-btn-annotations" onclick="switchCompanionTab('annotations')" class="pb-3 font-mono text-[11px] uppercase tracking-[0.15em] flex items-center gap-1.5 border-b-2 border-[var(--accent-gold)] text-[var(--accent-gold-bright)] transition">
+                            <i data-lucide="quote" class="w-3.5 h-3.5"></i>
+                            <span>Annotations</span>
+                            <span id="studio-anno-count" class="px-1.5 py-0.2 rounded bg-[var(--bg-elevated)] border border-[var(--border-primary)] text-[10px] text-[var(--text-secondary)]">0</span>
+                        </button>
+
+                        <button id="tab-btn-notes" onclick="switchCompanionTab('notes')" class="pb-3 font-mono text-[11px] uppercase tracking-[0.15em] flex items-center gap-1.5 border-b-2 border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
+                            <i data-lucide="scroll" class="w-3.5 h-3.5"></i>
+                            <span>Notes</span>
+                        </button>
+
+                        <button id="tab-btn-files" onclick="switchCompanionTab('files')" class="pb-3 font-mono text-[11px] uppercase tracking-[0.15em] flex items-center gap-1.5 border-b-2 border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] transition">
+                            <i data-lucide="paperclip" class="w-3.5 h-3.5"></i>
+                            <span>Files</span>
+                            <span id="studio-files-count" class="px-1.5 py-0.2 rounded bg-[var(--bg-elevated)] border border-[var(--border-primary)] text-[10px] text-[var(--text-secondary)]">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- COMPONENT 1: ANNOTATIONS PANEL -->
+                <div id="companion-panel-annotations" class="flex-1 flex flex-col overflow-hidden">
+                    <!-- Curator Add Annotation Drawer -->
+                    <div id="curator-anno-controls" class="hidden p-4 border-b border-[var(--border-primary)] bg-[var(--bg-primary)]/40 shrink-0">
+                        <button id="open-anno-form-btn" onclick="toggleAnnotationForm(true)" class="w-full py-2.5 px-3 rounded border border-dashed border-[var(--border-hover)] hover:border-[var(--accent-gold)] bg-[var(--bg-surface)] text-xs font-mono uppercase tracking-[0.14em] text-[var(--accent-gold)] hover:text-[var(--accent-gold-bright)] flex items-center justify-center gap-2 transition">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            <span>Add Annotation</span>
+                        </button>
+
+                        <form id="new-anno-form" onsubmit="saveNewAnnotation(event)" class="hidden space-y-2.5 bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded p-3.5">
+                            <div class="flex items-center justify-between">
+                                <span class="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--accent-gold)]">New Margin Annotation</span>
+                                <button type="button" onclick="toggleAnnotationForm(false)" class="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+
+                            <textarea id="anno-quote-field" rows="2" placeholder="Highlighted passage or quoted text..." class="w-full bg-[var(--bg-input)] border border-[var(--border-primary)] focus:border-[var(--accent-gold)] rounded p-2 font-display italic text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none"></textarea>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" id="anno-source-field" placeholder="Source / Folio Ref" class="bg-[var(--bg-input)] border border-[var(--border-primary)] focus:border-[var(--accent-gold)] rounded px-2.5 py-1.5 font-mono text-[11px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none">
+                                <select id="anno-tag-field" class="bg-[var(--bg-input)] border border-[var(--border-primary)] focus:border-[var(--accent-gold)] rounded px-2 py-1.5 font-mono text-[11px] text-[var(--accent-gold-bright)] focus:outline-none">
+                                    <option value="Thesis">Thesis</option>
+                                    <option value="Evidence">Evidence</option>
+                                    <option value="Counterpoint">Counterpoint</option>
+                                    <option value="Marginalia" selected>Marginalia</option>
+                                    <option value="Citation">Citation</option>
+                                </select>
+                            </div>
+
+                            <textarea id="anno-comment-field" rows="2" required placeholder="Analytical commentary or gloss..." class="w-full bg-[var(--bg-input)] border border-[var(--border-primary)] focus:border-[var(--accent-gold)] rounded p-2 font-sans text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none"></textarea>
+
+                            <div class="flex justify-end gap-2 pt-1">
+                                <button type="button" onclick="toggleAnnotationForm(false)" class="px-3 py-1 rounded font-mono text-[10px] uppercase tracking-wider text-[var(--text-secondary)] hover:text-[var(--text-primary)]">Cancel</button>
+                                <button type="submit" class="archival-btn archival-btn-gold px-3.5 py-1 rounded">Inscribe</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Annotations List -->
+                    <div id="studio-annotations-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- COMPONENT 2: NOTES PANEL -->
+                <div id="companion-panel-notes" class="hidden flex-1 flex flex-col overflow-hidden">
+                    <div class="px-4 py-2.5 border-b border-[var(--border-primary)] bg-[var(--bg-primary)]/40 flex items-center justify-between shrink-0">
+                        <span class="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--text-muted)]">Research Scratchpad &amp; Outline</span>
+                        <div class="flex items-center gap-2">
+                            <button id="notes-scaffold-btn" type="button" onclick="insertNoteTemplate()" class="hidden font-mono text-[10px] uppercase tracking-wider text-[var(--accent-gold)] hover:underline" title="Insert structured outline scaffold">+ Scaffold</button>
+                            <span id="studio-notes-words" class="font-mono text-[10px] text-[var(--text-muted)]">0w</span>
+                        </div>
+                    </div>
+                    <textarea id="studio-notes-textarea" readonly placeholder="No research notes inscribed for this folio yet." class="flex-1 w-full p-5 bg-transparent font-sans text-sm leading-relaxed text-[var(--text-primary)] placeholder:text-[var(--text-muted)]/60 focus:outline-none resize-none"></textarea>
+                </div>
+
+                <!-- COMPONENT 3: FILES PANEL -->
+                <div id="companion-panel-files" class="hidden flex-1 flex flex-col overflow-hidden">
+                    <div id="drawer-upload-bar" class="hidden p-4 border-b border-[var(--border-primary)] bg-[var(--bg-primary)]/40 shrink-0">
+                        <label class="w-full py-2.5 px-3 rounded border border-dashed border-[var(--border-hover)] hover:border-[var(--accent-gold)] bg-[var(--bg-surface)] text-xs font-mono uppercase tracking-[0.14em] text-[var(--accent-gold)] hover:text-[var(--accent-gold-bright)] flex items-center justify-center gap-2 cursor-pointer transition">
+                            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                            <span>Upload PDF, Image or Document</span>
+                            <input type="file" multiple class="hidden" onchange="handleFileUpload(event, 'essay')">
+                        </label>
+                    </div>
+                    <div id="studio-drawer-files-list" class="flex-1 overflow-y-auto p-4 space-y-2.5">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </section>
+
+    <!-- =======================================================================
+         CURATOR LOGIN / ACCOUNT MODAL
+         ======================================================================= -->
+    <div id="curator-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-xs p-4">
+        <div class="folio-card rounded max-w-md w-full p-6 sm:p-7 shadow-2xl">
+            <div class="corner-bracket-tr"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent-gold)]">CURATOR CREDENTIALS</span>
+                <button onclick="closeCuratorModal()" class="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+
+            <!-- Logged Out Form -->
+            <form id="curator-login-form" onsubmit="submitCuratorLogin(event)" class="space-y-4">
+                <div>
+                    <h3 class="font-display text-2xl font-medium text-[var(--text-primary)]">Unlock Curator Studio</h3>
+                    <p class="font-sans text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">
+                        Sign in with your Supabase Curator account to edit essays, manage annotations, and upload public files.
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--text-secondary)] mb-1.5">Email Address</label>
+                    <input type="email" id="curator-email-input" required placeholder="curator@palimpsest.net" class="w-full bg-[var(--bg-input)] border border-[var(--border-primary)] focus:border-[var(--accent-gold)] rounded px-3 py-2 font-sans text-sm text-[var(--text-primary)] focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--text-secondary)] mb-1.5">Password</label>
+                    <input type="password" id="curator-password-input" required placeholder="••••••••••••" class="w-full bg-[var(--bg-input)] border border-[var(--border-primary)] focus:border-[var(--accent-gold)] rounded px-3 py-2 font-sans text-sm text-[var(--text-primary)] focus:outline-none">
+                </div>
+
+                <div id="curator-auth-error" class="hidden p-2.5 rounded border border-[var(--accent-crimson)]/50 bg-[var(--accent-crimson)]/10 text-xs text-[var(--accent-crimson)]"></div>
+
+                <div class="flex items-center justify-end gap-2.5 pt-2">
+                    <button type="button" onclick="closeCuratorModal()" class="archival-btn px-4 py-2 rounded">Cancel</button>
+                    <button type="submit" id="curator-submit-btn" class="archival-btn archival-btn-gold px-5 py-2 rounded">Authenticate</button>
+                </div>
+            </form>
+
+            <!-- Logged In Account View -->
+            <div id="curator-account-panel" class="hidden space-y-4">
+                <div>
+                    <h3 class="font-display text-2xl font-medium text-[var(--text-primary)]">Curator Session Active</h3>
+                    <p class="font-sans text-xs text-[var(--text-secondary)] mt-1">
+                        Signed in as <span id="curator-active-email" class="text-[var(--accent-gold-bright)] font-mono"></span>. All edits and uploads synchronize automatically to the public archive.
+                    </p>
+                </div>
+
+                <div class="p-3.5 rounded border border-[var(--border-primary)] bg-[var(--bg-primary)]/60 flex items-center justify-between">
+                    <span class="font-mono text-[11px] text-[var(--text-secondary)]">Force Cloud Sync</span>
+                    <button onclick="saveToSupabaseNow(); closeCuratorModal();" class="archival-btn archival-btn-gold px-3 py-1 rounded">Push Now</button>
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                    <button onclick="signOutCurator()" class="px-4 py-2 rounded font-mono text-[11px] uppercase tracking-wider border border-[var(--accent-crimson)]/60 text-[var(--accent-crimson)] hover:bg-[var(--accent-crimson)] hover:text-white transition">
+                        Sign Out
+                    </button>
+                    <button onclick="closeCuratorModal()" class="archival-btn px-4 py-2 rounded">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =======================================================================
+         CONFIRMATION MODAL
+         ======================================================================= -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-xs p-4">
+        <div class="folio-card rounded max-w-md w-full p-6 shadow-2xl">
+            <div class="corner-bracket-tr"></div>
+            <div class="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent-gold)] mb-2">ARCHIVAL CONFIRMATION</div>
+            <h3 id="confirm-modal-title" class="font-display text-2xl font-medium text-[var(--text-primary)] mb-2">Expunge Folio?</h3>
+            <p id="confirm-modal-desc" class="font-sans text-xs text-[var(--text-secondary)] leading-relaxed mb-6">This holding, along with its annotations and research notes, will be removed.</p>
+            <div class="flex items-center justify-end gap-2.5">
+                <button onclick="closeConfirmModal()" class="archival-btn px-4 py-2 rounded">Cancel</button>
+                <button id="confirm-modal-action" class="px-4 py-2 rounded font-mono text-[11px] uppercase tracking-wider bg-[var(--accent-crimson)] text-[#ede6d6] hover:opacity-90 transition">Expunge</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =======================================================================
+         EXPORT MODAL
+         ======================================================================= -->
+    <div id="export-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-xs p-4">
+        <div class="folio-card rounded max-w-lg w-full p-6 shadow-2xl">
+            <div class="corner-bracket-tr"></div>
+            <div class="flex items-center justify-between mb-3">
+                <span class="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent-gold)]">EXPORT CODEX</span>
+                <button onclick="closeExportModal()" class="text-[var(--text-muted)] hover:text-[var(--text-primary)]"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <h3 class="font-display text-2xl font-medium text-[var(--text-primary)] mb-2">Compile &amp; Download Holdings</h3>
+            <p class="font-sans text-xs text-[var(--text-secondary)] mb-5">Download the complete archive including Proposal Charter, all Essay Folios, Annotations, Notes, and file links.</p>
+            
+            <div class="space-y-2.5 mb-6">
+                <button onclick="exportArchiveMarkdown()" class="w-full text-left p-4 rounded border border-[var(--border-primary)] hover:border-[var(--accent-gold)] bg-[var(--bg-primary)]/60 transition flex items-center justify-between group">
+                    <div>
+                        <div class="font-display text-lg font-medium text-[var(--text-primary)] group-hover:text-[var(--accent-gold-bright)]">Complete Cabinet Manuscript (.md)</div>
+                        <div class="font-mono text-[11px] text-[var(--text-muted)] mt-0.5">Markdown compilation of Proposal + all Folios &amp; Marginalia</div>
+                    </div>
+                    <i data-lucide="file-text" class="w-4 h-4 text-[var(--accent-gold)]"></i>
+                </button>
+
+                <button onclick="exportArchiveJSON()" class="w-full text-left p-4 rounded border border-[var(--border-primary)] hover:border-[var(--accent-gold)] bg-[var(--bg-primary)]/60 transition flex items-center justify-between group">
+                    <div>
+                        <div class="font-display text-lg font-medium text-[var(--text-primary)] group-hover:text-[var(--accent-gold-bright)]">Full Structured Archive (.json)</div>
+                        <div class="font-mono text-[11px] text-[var(--text-muted)] mt-0.5">Complete JSON backup snapshot</div>
+                    </div>
+                    <i data-lucide="braces" class="w-4 h-4 text-[var(--accent-gold)]"></i>
+                </button>
+            </div>
+
+            <div class="flex justify-end">
+                <button onclick="closeExportModal()" class="archival-btn px-4 py-2 rounded">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =======================================================================
+         ARCHIVAL TOAST BANNER
+         ======================================================================= -->
+    <div id="toast-banner" class="fixed bottom-5 right-5 z-50 hidden items-center gap-3 border border-[var(--accent-gold)] bg-[var(--bg-elevated)] text-[var(--text-primary)] px-4 py-2.5 rounded shadow-2xl font-mono text-xs">
+        <span id="toast-msg">Archive updated</span>
+        <button id="toast-undo-btn" onclick="undoLastDeletion()" class="hidden text-[var(--accent-gold-bright)] underline uppercase tracking-wider font-semibold">Undo</button>
+    </div>
+
+    <script>
+        /* =====================================================================
+           SUPABASE CLOUD CONFIGURATION (PRE-CONFIGURED)
+           ===================================================================== */
+        const SUPABASE_URL = 'https://caxibehcdvpdhkfxlcim.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_35nCJmzjUKGBd5udm3uuMw_XQ6e0ZQv';
+        const ARCHIVE_ROW_ID = 'main_archive';
+        const STORAGE_BUCKET = 'archive-files';
+
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            realtime: {
+                params: {
+                    eventsPerSecond: 1
+                }
+            },
+            global: {
+                headers: { 'x-client-info': 'palimpsest-archive' }
+            }
+        });
+        // Prevent background realtime auto-connect in sandboxed iframe environments
+        if (sb.realtime && typeof sb.realtime.disconnect === 'function') {
+            try { sb.realtime.disconnect(); } catch (_) {}
+        }
+
+        /* =====================================================================
+           PROCEDURAL SACRED GEOMETRY SVG EMBLEMS (MATCHING REFERENCE SCREENSHOT)
+           ===================================================================== */
+        const SACRED_EMBLEMS = [
+            // 0: Folio I — Interlocking Hexagram & Concentric Rings (Hero Plate)
+            `<svg viewBox="0 0 240 240" class="sacred-svg w-full h-full max-w-[235px] max-h-[235px]" fill="none">
+                <circle cx="120" cy="120" r="96" stroke-width="0.9"/>
+                <circle cx="120" cy="120" r="84" stroke-width="0.6" stroke-dasharray="3 4"/>
+                <polygon points="120,24 203,168 37,168" stroke-width="0.9"/>
+                <polygon points="120,216 203,72 37,72" stroke-width="0.9"/>
+                <circle cx="120" cy="120" r="48" stroke-width="0.9"/>
+                <circle cx="120" cy="120" r="9" fill="currentColor" class="text-[#c5a878]/20" stroke-width="0.8"/>
+            </svg>`,
+
+            // 1: Folio II — Vesica Piscis & Astrolabe Crosshair (Tall Center Plate)
+            `<svg viewBox="0 0 240 240" class="sacred-svg w-full h-full max-w-[215px] max-h-[215px]" fill="none">
+                <line x1="20" y1="120" x2="220" y2="120" stroke-width="0.7"/>
+                <line x1="120" y1="20" x2="120" y2="220" stroke-width="0.7"/>
+                <ellipse cx="120" cy="120" rx="88" ry="44" stroke-width="0.9"/>
+                <ellipse cx="120" cy="120" rx="44" ry="88" stroke-width="0.9"/>
+                <polygon points="120,76 164,120 120,164 76,120" stroke-width="0.85"/>
+                <circle cx="120" cy="120" r="44" stroke-width="0.6" stroke-dasharray="2 3"/>
+            </svg>`,
+
+            // 2: Folio III — Celestial Meridian & Horizon Arc (Top-Right Plate)
+            `<svg viewBox="0 0 240 240" class="sacred-svg w-full h-full max-w-[180px] max-h-[180px]" fill="none">
+                <line x1="120" y1="22" x2="120" y2="218" stroke-width="0.7" stroke-dasharray="2 3"/>
+                <circle cx="120" cy="96" r="52" stroke-width="0.9"/>
+                <path d="M 42 178 A 96 96 0 0 1 198 178" stroke-width="0.9"/>
+                <path d="M 56 194 A 86 86 0 0 1 184 194" stroke-width="0.7"/>
+            </svg>`,
+
+            // 3: Folio IV — Codex Manuscript Diagram (Bottom-Right Plate)
+            `<svg viewBox="0 0 240 240" class="sacred-svg w-full h-full max-w-[180px] max-h-[180px]" fill="none">
+                <rect x="64" y="38" width="112" height="164" stroke-width="0.9"/>
+                <rect x="73" y="47" width="94" height="146" stroke-width="0.65"/>
+                <line x1="90" y1="76" x2="150" y2="76" stroke-width="0.85"/>
+                <line x1="90" y1="94" x2="150" y2="94" stroke-width="0.85"/>
+                <line x1="90" y1="112" x2="132" y2="112" stroke-width="0.85"/>
+                <circle cx="120" cy="156" r="16" stroke-width="0.9"/>
+            </svg>`,
+
+            // 4: Folio V+ — Octagram Rose Compass
+            `<svg viewBox="0 0 240 240" class="sacred-svg w-full h-full max-w-[185px] max-h-[185px]" fill="none">
+                <circle cx="120" cy="120" r="82" stroke-width="0.85"/>
+                <rect x="62" y="62" width="116" height="116" stroke-width="0.85"/>
+                <rect x="62" y="62" width="116" height="116" transform="rotate(45 120 120)" stroke-width="0.85"/>
+                <circle cx="120" cy="120" r="24" stroke-width="0.85"/>
+            </svg>`
+        ];
+
+        function toRoman(num) {
+            const map = [
+                [1000, 'M'], [900, 'CM'], [500, 'D'], [400, 'CD'],
+                [100, 'C'], [90, 'XC'], [50, 'L'], [40, 'XL'],
+                [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']
+            ];
+            let res = '';
+            let n = Math.max(1, num);
+            for (const [val, sym] of map) {
+                while (n >= val) {
+                    res += sym;
+                    n -= val;
+                }
+            }
+            return res;
+        }
+
+        /* =====================================================================
+           DEFAULT STARTER ARCHIVE (3 ESSAYS + 1 PROJECT PROPOSAL)
+           ===================================================================== */
+        function getStarterArchive() {
+            return {
+                proposal: {
+                    kicker: 'PROJECT PROPOSAL • MASTER CHARTER',
+                    title: 'Archaeologies of the Trace & Digital Permanence',
+                    subtitle: 'Epistemes, Archival Fever & the Poetics of Layered Memory',
+                    thesis: 'Whereas classical vellum preserved cultural memory through visible stratification, modern interfaces conceal erasure—demanding an intentional editorial architecture of the palimpsest.',
+                    body: `<p>This cabinet of illuminated folios investigates how intellectual traditions endure when inscribed upon surfaces that preserve their own revisions. Rather than treating marginalia and fragmentary notes as ephemera to be discarded, each folio pairs a central essay with structured scholarly annotations and research notes.</p><h2>Sequence of Holdings</h2><ul><li><strong>Folio I</strong> interrogates the archive as the governing system of what can be articulated within an epoch.</li><li><strong>Folio II</strong> examines the compulsion toward origin and inscription, tracing how every supplementary gloss transforms the primary text.</li><li><strong>Folio III</strong> explores the physical margin as a collaborative workshop of memory.</li></ul>`,
+                    files: []
+                },
+                essays: [
+                    {
+                        id: 'folio-1',
+                        kicker: 'MICHEL FOUCAULT',
+                        title: 'The Order of Things & The Archaeology of Knowledge',
+                        subtitle: 'Epistemes, Discursive Formations & the Panoptic Gaze',
+                        body: `<p>The archive is first the law of what can be said, the system that governs the appearance of statements as unique events. Far from being the passive sum of all texts that a culture has kept upon its shelves, it is the hidden grid determining which utterances endure and which dissolve into silence.</p><blockquote>"Between language and the visible world lies an unspoken table of affinities—an episteme that quietly arranges what an era permits itself to see."</blockquote><p>To practice archaeology upon a body of thought is therefore not to excavate a single pristine origin, but to map the thresholds where one discursive formation fractures and reorganizes around new rules of evidence.</p>`,
+                        annotations: [
+                            {
+                                id: 'ann-1',
+                                quote: 'The archive is first the law of what can be said, the system that governs the appearance of statements as unique events.',
+                                source: 'Archaeology of Knowledge, III.5',
+                                tag: 'Thesis',
+                                comment: 'Foucault defines the archive as an active generative system rather than an inert storage warehouse.'
+                            }
+                        ],
+                        notes: `STRUCTURAL NOTES:\n• Contrast traditional history of ideas (linear continuity) with archaeological stratification.\n• Link directly to the Proposal Charter's claim on visible vs. invisible erasure.`,
+                        files: []
+                    },
+                    {
+                        id: 'folio-2',
+                        kicker: 'JACQUES DERRIDA',
+                        title: 'Archive Fever & Of Grammatology',
+                        subtitle: 'Trace, Différance & the Supplement of Writing',
+                        body: `<p>There is no archive without a place of consignation, without a technique of repetition, and without a certain exteriority. Every act of inscription simultaneously preserves memory and threatens it with hypomnesic forgetting—outsourcing living recollection to an external substrate.</p>`,
+                        annotations: [
+                            {
+                                id: 'ann-2',
+                                quote: 'There is no archive without a place of consignation, without a technique of repetition',
+                                source: 'Mal d’Archive, p. 11',
+                                tag: 'Evidence',
+                                comment: 'Connect the classical arkheion (magistrate’s residence) to our shared public cloud cabinet.'
+                            }
+                        ],
+                        notes: `RESEARCH LEADS:\n• Examine Freud’s Mystic Writing Pad (Wunderblock) as a mechanical precursor to layered digital texts.`,
+                        files: []
+                    },
+                    {
+                        id: 'folio-3',
+                        kicker: 'ESSAY III',
+                        title: 'Palimpsest of Marginalia',
+                        subtitle: 'Commonplace Books, Glosses & the Dialogue of Ink',
+                        body: `<p>Renaissance readers approached wide-margined folios not as passive consumers, but as co-authors engaged in a slow dialogue across centuries. Inked manicules, cross-references, and lexical glosses transformed solitary pages into dense networks of civic memory.</p>`,
+                        annotations: [],
+                        notes: `OUTLINE:\n• Survey early modern commonplace books and marginal glossing conventions.`,
+                        files: []
+                    }
+                ]
+            };
+        }
+
+        /* =====================================================================
+           APPLICATION STATE
+           ===================================================================== */
+        let archiveData = getStarterArchive();
+        let currentTheme = localStorage.getItem('palimpsest_theme') || 'nocturne';
+        let currentUser = null; // Supabase User object when Curator is authenticated
+        let activeView = 'cabinet'; // 'cabinet' | 'proposal' | 'essay'
+        let activeEssayId = 'folio-1';
+        let activeCompanionTab = 'annotations'; // 'annotations' | 'notes' | 'files'
+        let hasCloudRecord = false;
+        let saveDebounceTimer = null;
+        let publicPollTimer = null;
+        let toastTimer = null;
+        let lastDeletedEssay = null;
+
+        function isCurator() {
+            return Boolean(currentUser);
+        }
+
+        /* =====================================================================
+           SUPABASE INITIALIZATION & CLOUD SYNC (HTTP REST — NO WEBSOCKETS)
+           ===================================================================== */
+        async function initApp() {
+            applyTheme(currentTheme);
+            bindEditorListeners();
+
+            // 1. Check existing Supabase Auth session
+            try {
+                const { data: sessionData } = await sb.auth.getSession();
+                currentUser = sessionData?.session?.user || null;
+            } catch (err) {
+                console.warn('Auth session check:', err);
+            }
+
+            // Listen for auth state changes
+            sb.auth.onAuthStateChange((_event, session) => {
+                const wasCurator = isCurator();
+                currentUser = session?.user || null;
+                updateCuratorUI();
+
+                // If Curator just logged in and cloud row didn't exist yet, seed it now
+                if (!wasCurator && isCurator() && !hasCloudRecord) {
+                    saveToSupabaseNow();
+                }
+                refreshCurrentView();
+            });
+
+            // 2. Fetch public archive from Supabase via standard HTTPS REST
+            await fetchCloudArchive();
+
+            // 3. Lightweight HTTPS polling every 25s for public visitors (WebSocket-safe)
+            publicPollTimer = setInterval(async () => {
+                if (!isCurator() && document.visibilityState === 'visible') {
+                    await fetchCloudArchive(true);
+                    refreshCurrentView();
+                }
+            }, 25000);
+
+            updateCuratorUI();
+            document.getElementById('initial-loader').classList.add('hidden');
+            openCabinetView();
+            lucide.createIcons();
+        }
+
+        async function fetchCloudArchive(silent = false) {
+            if (!silent) setSyncStatus('Fetching...', 'gold');
+            try {
+                const { data, error } = await sb
+                    .from('palimpsest_archive')
+                    .select('data')
+                    .eq('id', ARCHIVE_ROW_ID)
+                    .maybeSingle();
+
+                if (error) {
+                    // PGRST205 = table not created yet in Supabase SQL Editor
+                    if (error.code === 'PGRST205') {
+                        hasCloudRecord = false;
+                        if (!silent) archiveData = getStarterArchive();
+                        setSyncStatus('Awaiting SQL Setup', 'gold');
+                        return;
+                    }
+                    throw error;
+                }
+
+                if (data && data.data && (data.data.proposal || data.data.essays)) {
+                    hasCloudRecord = true;
+                    normalizeAndLoadArchive(data.data);
+                    setSyncStatus('Live Archive', 'emerald');
+                } else {
+                    hasCloudRecord = false;
+                    if (!silent) archiveData = getStarterArchive();
+                    setSyncStatus('Starter Showcase', 'gold');
+                }
+            } catch (err) {
+                console.warn('Supabase fetch notice:', err.message || err);
+                setSyncStatus('Offline Cache', 'crimson');
+                if (!silent) showToast('Could not reach cloud database; showing starter archive.');
+            }
+        }
+
+        function normalizeAndLoadArchive(raw) {
+            const starter = getStarterArchive();
+            archiveData = {
+                proposal: {
+                    ...starter.proposal,
+                    ...(raw.proposal || {}),
+                    files: Array.isArray(raw.proposal?.files) ? raw.proposal.files : []
+                },
+                essays: Array.isArray(raw.essays)
+                    ? raw.essays.map((e, idx) => ({
+                          id: e.id || `folio-${idx + 1}`,
+                          kicker: e.kicker || `ESSAY ${toRoman(idx + 1)}`,
+                          title: e.title || `Untitled Folio ${toRoman(idx + 1)}`,
+                          subtitle: e.subtitle || '',
+                          body: e.body || '',
+                          annotations: Array.isArray(e.annotations) ? e.annotations : [],
+                          notes: e.notes || '',
+                          files: Array.isArray(e.files) ? e.files : []
+                      }))
+                    : starter.essays
+            };
+        }
+
+        function queueCloudSave() {
+            if (!isCurator()) return;
+            setSyncStatus('Unsaved...', 'gold');
+            clearTimeout(saveDebounceTimer);
+            saveDebounceTimer = setTimeout(() => {
+                saveToSupabaseNow();
+            }, 800);
+        }
+
+        async function saveToSupabaseNow() {
+            if (!isCurator()) return;
+            clearTimeout(saveDebounceTimer);
+            setSyncStatus('Saving...', 'gold');
+
+            try {
+                const { error } = await sb
+                    .from('palimpsest_archive')
+                    .upsert({
+                        id: ARCHIVE_ROW_ID,
+                        data: archiveData,
+                        updated_at: new Date().toISOString()
+                    });
+
+                if (error) throw error;
+                hasCloudRecord = true;
+                setSyncStatus('Saved to Cloud ✓', 'emerald');
+            } catch (err) {
+                console.error('Cloud save failed:', err);
+                setSyncStatus('Save Failed', 'crimson');
+                if (err.code === 'PGRST205') {
+                    showToast('Table public.palimpsest_archive not found — run the SQL setup script in Supabase SQL Editor.');
+                } else if (err.code === '42501') {
+                    showToast('Permission denied (42501) — run GRANT SELECT, INSERT, UPDATE ON public.palimpsest_archive TO authenticated; in Supabase SQL Editor.');
+                } else {
+                    showToast(`Cloud save error: ${err.message || 'Check permissions'}`);
+                }
+            }
+        }
+
+        function setSyncStatus(label, colorKey) {
+            const labelEl = document.getElementById('sync-label');
+            const dotEl = document.getElementById('sync-dot');
+            if (labelEl) labelEl.textContent = label;
+            if (dotEl) {
+                const colors = {
+                    emerald: 'var(--accent-emerald)',
+                    gold: 'var(--accent-gold)',
+                    crimson: 'var(--accent-crimson)'
+                };
+                dotEl.style.backgroundColor = colors[colorKey] || colors.gold;
+            }
+        }
+
+        /* =====================================================================
+           THEME & CURATOR AUTH UI
+           ===================================================================== */
+        function applyTheme(theme) {
+            currentTheme = theme === 'parchment' ? 'parchment' : 'nocturne';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            localStorage.setItem('palimpsest_theme', currentTheme);
+
+            const label = document.getElementById('theme-label');
+            const icon = document.getElementById('theme-icon');
+            if (label) label.textContent = currentTheme === 'nocturne' ? 'NOCTURNE' : 'PARCHMENT';
+            if (icon) icon.setAttribute('data-lucide', currentTheme === 'nocturne' ? 'moon' : 'sun');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function toggleTheme() {
+            applyTheme(currentTheme === 'nocturne' ? 'parchment' : 'nocturne');
+        }
+
+        function updateCuratorUI() {
+            const curator = isCurator();
+            const authBtn = document.getElementById('curator-auth-btn');
+            const authIcon = document.getElementById('curator-auth-icon');
+            const authLabel = document.getElementById('curator-auth-label');
+            const addPlateBtn = document.getElementById('header-add-plate-btn');
+            const modeBadge = document.getElementById('cabinet-mode-badge');
+
+            if (curator) {
+                authBtn?.classList.add('archival-btn-gold');
+                authIcon?.setAttribute('data-lucide', 'unlock');
+                if (authLabel) authLabel.textContent = 'CURATOR ACTIVE';
+                addPlateBtn?.classList.remove('hidden');
+                if (modeBadge) modeBadge.textContent = 'CURATOR STUDIO • LIVE EDITING';
+            } else {
+                authBtn?.classList.remove('archival-btn-gold');
+                authIcon?.setAttribute('data-lucide', 'lock');
+                if (authLabel) authLabel.textContent = 'CURATOR';
+                addPlateBtn?.classList.add('hidden');
+                if (modeBadge) modeBadge.textContent = 'PUBLIC ARCHIVE • READ-ONLY';
+            }
+
+            // Proposal Chamber editable state
+            const propTitle = document.getElementById('proposal-title-input');
+            const propSub = document.getElementById('proposal-subtitle-input');
+            const propThesis = document.getElementById('proposal-thesis-input');
+            const propBody = document.getElementById('proposal-body-editor');
+            const propToolbar = document.getElementById('proposal-toolbar');
+            const propUpload = document.getElementById('proposal-upload-label');
+
+            if (propTitle) propTitle.readOnly = !curator;
+            if (propSub) propSub.readOnly = !curator;
+            if (propThesis) propThesis.readOnly = !curator;
+            if (propBody) propBody.contentEditable = curator ? 'true' : 'false';
+            propToolbar?.classList.toggle('hidden', !curator);
+            propUpload?.classList.toggle('hidden', !curator);
+
+            // Essay Studio editable state
+            const essayKicker = document.getElementById('essay-kicker-input');
+            const essayTitle = document.getElementById('essay-title-input');
+            const essaySub = document.getElementById('essay-subtitle-input');
+            const essayBody = document.getElementById('essay-body-editor');
+            const essayToolbar = document.getElementById('essay-toolbar');
+            const essayDeleteBtn = document.getElementById('studio-delete-essay-btn');
+            const essayUpload = document.getElementById('essay-upload-label');
+            const curatorAnnoControls = document.getElementById('curator-anno-controls');
+            const notesTextarea = document.getElementById('studio-notes-textarea');
+            const notesScaffoldBtn = document.getElementById('notes-scaffold-btn');
+            const drawerUploadBar = document.getElementById('drawer-upload-bar');
+
+            if (essayKicker) essayKicker.readOnly = !curator;
+            if (essayTitle) essayTitle.readOnly = !curator;
+            if (essaySub) essaySub.readOnly = !curator;
+            if (essayBody) essayBody.contentEditable = curator ? 'true' : 'false';
+            essayToolbar?.classList.toggle('hidden', !curator);
+            essayDeleteBtn?.classList.toggle('hidden', !curator);
+            essayUpload?.classList.toggle('hidden', !curator);
+            curatorAnnoControls?.classList.toggle('hidden', !curator);
+            if (notesTextarea) {
+                notesTextarea.readOnly = !curator;
+                notesTextarea.placeholder = curator
+                    ? 'Inscribe research notes, structural outlines, or bibliographic leads...'
+                    : 'No research notes inscribed for this folio yet.';
+            }
+            notesScaffoldBtn?.classList.toggle('hidden', !curator);
+            drawerUploadBar?.classList.toggle('hidden', !curator);
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function handleCuratorButtonClick() {
+            const modal = document.getElementById('curator-modal');
+            const loginForm = document.getElementById('curator-login-form');
+            const accountPanel = document.getElementById('curator-account-panel');
+            const errorBox = document.getElementById('curator-auth-error');
+
+            errorBox.classList.add('hidden');
+            if (isCurator()) {
+                loginForm.classList.add('hidden');
+                accountPanel.classList.remove('hidden');
+                document.getElementById('curator-active-email').textContent = currentUser.email || 'Curator';
+            } else {
+                accountPanel.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCuratorModal() {
+            const modal = document.getElementById('curator-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function submitCuratorLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('curator-email-input').value.trim();
+            const password = document.getElementById('curator-password-input').value;
+            const errorBox = document.getElementById('curator-auth-error');
+            const submitBtn = document.getElementById('curator-submit-btn');
+
+            errorBox.classList.add('hidden');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verifying...';
+
+            try {
+                const { data, error } = await sb.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                currentUser = data.user;
+                updateCuratorUI();
+                closeCuratorModal();
+                showToast('Curator Studio unlocked');
+                if (!hasCloudRecord) {
+                    await saveToSupabaseNow();
+                }
+                refreshCurrentView();
+            } catch (err) {
+                errorBox.textContent = err.message || 'Authentication failed. Check your email and password.';
+                errorBox.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Authenticate';
+            }
+        }
+
+        async function signOutCurator() {
+            await sb.auth.signOut();
+            currentUser = null;
+            updateCuratorUI();
+            closeCuratorModal();
+            refreshCurrentView();
+            showToast('Signed out to Public Reader view');
+        }
+
+        /* =====================================================================
+           NAVIGATION & VIEW RENDERING
+           ===================================================================== */
+        function refreshCurrentView() {
+            if (activeView === 'cabinet') openCabinetView();
+            else if (activeView === 'proposal') openProposalChamber();
+            else if (activeView === 'essay') openEssayStudio(activeEssayId);
+        }
+
+        function openCabinetView() {
+            activeView = 'cabinet';
+            document.getElementById('cabinet-view').classList.remove('hidden');
+            document.getElementById('proposal-view').classList.add('hidden');
+            document.getElementById('essay-studio-view').classList.add('hidden');
+            renderCabinetGrid();
+        }
+
+        function renderCabinetGrid() {
+            const essays = archiveData.essays || [];
+            const prop = archiveData.proposal || {};
+
+            // Summary metrics
+            const totalEssayWords = essays.reduce((acc, e) => acc + countWordsHTML(e.body), 0);
+            const propWords = countWordsHTML(prop.body) + countWordsPlain(prop.thesis);
+            document.getElementById('cabinet-count-summary').textContent =
+                `1 Proposal & ${essays.length} Illuminated Folio${essays.length === 1 ? '' : 's'}`;
+            document.getElementById('cabinet-total-words').textContent =
+                `${(totalEssayWords + propWords).toLocaleString()} Words Cataloged`;
+
+            // Pinned Proposal Banner Card
+            const propFilesCount = (prop.files || []).length;
+            document.getElementById('proposal-banner-container').innerHTML = `
+                <article onclick="openProposalChamber()" class="folio-card rounded p-5 sm:p-6 cursor-pointer group flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="corner-bracket-tr"></div>
+                    <div class="space-y-1.5 max-w-4xl">
+                        <div class="flex items-center gap-2.5 flex-wrap">
+                            <span class="px-2 py-0.5 rounded border border-[var(--accent-gold)]/50 bg-[var(--accent-gold-dim)] font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--accent-gold-bright)]">
+                                PROPOSAL • CHARTER
+                            </span>
+                            <span class="font-mono text-[11px] text-[var(--text-muted)]">
+                                ${propWords} Words${propFilesCount ? ` • ${propFilesCount} File${propFilesCount === 1 ? '' : 's'}` : ''}
+                            </span>
+                        </div>
+                        <h2 class="font-display text-2xl sm:text-3xl font-medium text-[var(--text-primary)] group-hover:text-[var(--accent-gold-bright)] transition">
+                            ${escapeHTML(prop.title || 'Untitled Project Proposal')}
+                        </h2>
+                        <p class="font-display italic text-base sm:text-lg text-[var(--text-secondary)] line-clamp-2">
+                            ${escapeHTML(prop.thesis || prop.subtitle || 'Open the master project charter and governing thesis...')}
+                        </p>
+                    </div>
+                    <div class="shrink-0 flex items-center gap-2 font-mono text-xs uppercase tracking-[0.14em] text-[var(--accent-gold)] group-hover:translate-x-1 transition-transform">
+                        <span>Open Charter</span>
+                        <span>→</span>
+                    </div>
+                </article>
+            `;
+
+            // Asymmetric Bento Grid for Essays
+            const grid = document.getElementById('bento-grid-container');
+            if (essays.length === 0) {
+                grid.innerHTML = `
+                    <div class="lg:col-span-12 folio-card rounded p-12 text-center">
+                        <div class="font-display italic text-2xl text-[var(--text-secondary)] mb-2">The cabinet shelves are currently bare.</div>
+                        <p class="font-mono text-xs text-[var(--text-muted)]">${isCurator() ? 'Click "+ ADD PLATE" in the header to inscribe your first essay folio.' : 'Sign in as Curator to add illuminated folios.'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = essays.map((essay, index) => {
+                const roman = toRoman(index + 1);
+                const svg = SACRED_EMBLEMS[index % SACRED_EMBLEMS.length];
+                const notesCount = countWordsPlain(essay.notes) > 0 ? 1 : 0;
+                const annoCount = (essay.annotations || []).length;
+                const filesCount = (essay.files || []).length;
+
+                // Bento column spans matching the asymmetric gallery layout
+                let spanClass = 'lg:col-span-4 min-h-[340px]';
+                if (index === 0) spanClass = 'lg:col-span-5 lg:row-span-2 min-h-[460px]';
+                else if (index === 1) spanClass = 'lg:col-span-4 lg:row-span-2 min-h-[460px]';
+                else if (index === 2 || index === 3) spanClass = 'lg:col-span-3 min-h-[260px]';
+
+                return `
+                    <article onclick="openEssayStudio('${escapeHTML(essay.id)}')" class="folio-card rounded p-5 sm:p-6 cursor-pointer flex flex-col justify-between ${spanClass} group">
+                        <div class="corner-bracket-tr"></div>
+
+                        <!-- Top Folio Tag -->
+                        <div class="flex items-center justify-between gap-2 mb-4">
+                            <span class="inline-block px-2.5 py-0.5 rounded border border-[var(--border-primary)] bg-[var(--bg-primary)]/70 font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                                FOLIO ${roman} • ARCHIVE
+                            </span>
+                            ${filesCount > 0 ? `<span class="font-mono text-[10px] text-[var(--accent-gold)]">${filesCount} File${filesCount === 1 ? '' : 's'}</span>` : ''}
+                        </div>
+
+                        <!-- Inner Dashed Sacred Geometry Chamber -->
+                        <div class="dashed-chamber rounded flex-1 my-1 p-5 flex items-center justify-center min-h-[130px]">
+                            ${svg}
+                        </div>
+
+                        <!-- Bottom Metadata & Open Link -->
+                        <div class="mt-4 pt-2">
+                            <div class="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent-gold)] mb-1">
+                                ${escapeHTML(essay.kicker || `ESSAY ${roman}`)}
+                            </div>
+                            <h3 class="font-display ${index === 0 ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl'} font-medium text-[var(--text-primary)] group-hover:text-[var(--accent-gold-bright)] transition leading-snug">
+                                ${escapeHTML(essay.title || `Untitled Folio ${roman}`)}
+                            </h3>
+                            ${essay.subtitle ? `<p class="font-display italic text-sm text-[var(--text-secondary)] mt-1 line-clamp-1">${escapeHTML(essay.subtitle)}</p>` : ''}
+
+                            <div class="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-[var(--border-primary)]/60 font-mono text-[11px] text-[var(--text-muted)]">
+                                <span>${notesCount} Note${notesCount === 1 ? '' : 's'} • ${annoCount} Annotation${annoCount === 1 ? '' : 's'}</span>
+                                <span class="text-[var(--accent-gold)] group-hover:translate-x-0.5 transition-transform">Open Holding →</span>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderSwitcherBar(containerId, activeKey) {
+            const bar = document.getElementById(containerId);
+            if (!bar) return;
+
+            const propActive = activeKey === 'proposal';
+            let html = `
+                <button onclick="openProposalChamber()" class="px-2.5 py-1 rounded font-mono text-[10px] uppercase tracking-[0.14em] border transition whitespace-nowrap ${
+                    propActive
+                        ? 'border-[var(--accent-gold)] bg-[var(--accent-gold-dim)] text-[var(--accent-gold-bright)]'
+                        : 'border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-[var(--accent-gold)]'
+                }">Proposal</button>
+            `;
+
+            (archiveData.essays || []).forEach((e, i) => {
+                const isCurr = activeKey === e.id;
+                html += `
+                    <button onclick="openEssayStudio('${escapeHTML(e.id)}')" class="px-2.5 py-1 rounded font-mono text-[10px] uppercase tracking-[0.14em] border transition whitespace-nowrap ${
+                        isCurr
+                            ? 'border-[var(--accent-gold)] bg-[var(--accent-gold-dim)] text-[var(--accent-gold-bright)]'
+                            : 'border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-[var(--accent-gold)]'
+                    }">Folio ${toRoman(i + 1)}</button>
+                `;
+            });
+
+            bar.innerHTML = html;
+        }
+
+        function openProposalChamber() {
+            activeView = 'proposal';
+            document.getElementById('cabinet-view').classList.add('hidden');
+            document.getElementById('essay-studio-view').classList.add('hidden');
+            document.getElementById('proposal-view').classList.remove('hidden');
+
+            const prop = archiveData.proposal;
+            document.getElementById('proposal-title-input').value = prop.title || '';
+            document.getElementById('proposal-subtitle-input').value = prop.subtitle || '';
+            document.getElementById('proposal-thesis-input').value = prop.thesis || '';
+            document.getElementById('proposal-body-editor').innerHTML = prop.body || '';
+
+            renderSwitcherBar('proposal-switcher-bar', 'proposal');
+            renderProposalFiles();
+            updateProposalMetrics();
+            updateCuratorUI();
+        }
+
+        function getCurrentEssay() {
+            return (archiveData.essays || []).find(e => e.id === activeEssayId) || archiveData.essays[0] || null;
+        }
+
+        function openEssayStudio(essayId) {
+            const target = (archiveData.essays || []).find(e => e.id === essayId) || archiveData.essays[0];
+            if (!target) {
+                openCabinetView();
+                return;
+            }
+
+            activeView = 'essay';
+            activeEssayId = target.id;
+            const idx = archiveData.essays.findIndex(e => e.id === target.id);
+            const roman = toRoman(idx + 1);
+
+            document.getElementById('cabinet-view').classList.add('hidden');
+            document.getElementById('proposal-view').classList.add('hidden');
+            document.getElementById('essay-studio-view').classList.remove('hidden');
+
+            document.getElementById('studio-folio-badge').textContent = `FOLIO ${roman} • ARCHIVE`;
+            document.getElementById('essay-kicker-input').value = target.kicker || '';
+            document.getElementById('essay-title-input').value = target.title || '';
+            document.getElementById('essay-subtitle-input').value = target.subtitle || '';
+            document.getElementById('essay-body-editor').innerHTML = target.body || '';
+            document.getElementById('studio-notes-textarea').value = target.notes || '';
+
+            renderSwitcherBar('essay-switcher-bar', target.id);
+            renderEssayAnnotations();
+            renderEssayFiles();
+            updateEssayMetrics();
+            updateNotesMetrics();
+            updateCuratorUI();
+        }
+
+        /* =====================================================================
+           ESSAY CRUD (ADD / DELETE / UNDO)
+           ===================================================================== */
+        function addNewEssayPlate() {
+            if (!isCurator()) {
+                handleCuratorButtonClick();
+                return;
+            }
+            const nextNum = (archiveData.essays || []).length + 1;
+            const roman = toRoman(nextNum);
+            const newEssay = {
+                id: 'folio-' + Date.now(),
+                kicker: `ESSAY ${roman}`,
+                title: `Untitled Folio ${roman}`,
+                subtitle: '',
+                body: '',
+                annotations: [],
+                notes: '',
+                files: []
+            };
+            archiveData.essays.push(newEssay);
+            queueCloudSave();
+            openEssayStudio(newEssay.id);
+            showToast(`Folio ${roman} added to cabinet`);
+        }
+
+        function promptDeleteCurrentEssay() {
+            if (!isCurator()) return;
+            const essay = getCurrentEssay();
+            if (!essay) return;
+
+            const modal = document.getElementById('confirm-modal');
+            document.getElementById('confirm-modal-title').textContent = `Expunge "${essay.title || 'Untitled Folio'}"?`;
+            document.getElementById('confirm-modal-desc').textContent =
+                'This essay plate, along with its margin annotations, research notes, and attached file links, will be removed from the cabinet.';
+
+            const actionBtn = document.getElementById('confirm-modal-action');
+            actionBtn.onclick = () => {
+                deleteEssayById(essay.id);
+                closeConfirmModal();
+            };
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirm-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function deleteEssayById(id) {
+            const idx = archiveData.essays.findIndex(e => e.id === id);
+            if (idx === -1) return;
+            const [removed] = archiveData.essays.splice(idx, 1);
+            lastDeletedEssay = { essay: removed, index: idx };
+            queueCloudSave();
+            openCabinetView();
+            showToast(`Expunged "${removed.title || 'Folio'}"`, true);
+        }
+
+        function undoLastDeletion() {
+            if (!lastDeletedEssay || !isCurator()) return;
+            const { essay, index } = lastDeletedEssay;
+            archiveData.essays.splice(Math.min(index, archiveData.essays.length), 0, essay);
+            lastDeletedEssay = null;
+            hideToast();
+            queueCloudSave();
+            refreshCurrentView();
+            showToast('Folio restored to cabinet');
+        }
+
+        /* =====================================================================
+           COMPANION TABS, ANNOTATIONS & NOTES
+           ===================================================================== */
+        function switchCompanionTab(tab) {
+            activeCompanionTab = tab;
+            const tabs = ['annotations', 'notes', 'files'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-btn-${t}`);
+                const panel = document.getElementById(`companion-panel-${t}`);
+                const isActive = t === tab;
+                if (btn) {
+                    btn.classList.toggle('border-[var(--accent-gold)]', isActive);
+                    btn.classList.toggle('text-[var(--accent-gold-bright)]', isActive);
+                    btn.classList.toggle('border-transparent', !isActive);
+                    btn.classList.toggle('text-[var(--text-muted)]', !isActive);
+                }
+                if (panel) panel.classList.toggle('hidden', !isActive);
+            });
+        }
+
+        function toggleAnnotationForm(show) {
+            const openBtn = document.getElementById('open-anno-form-btn');
+            const form = document.getElementById('new-anno-form');
+            if (show) {
+                openBtn?.classList.add('hidden');
+                form?.classList.remove('hidden');
+                document.getElementById('anno-comment-field')?.focus();
+            } else {
+                form?.classList.add('hidden');
+                openBtn?.classList.remove('hidden');
+                form?.reset();
+            }
+        }
+
+        function citeSelectedText() {
+            if (!isCurator()) return;
+            const sel = window.getSelection();
+            const text = sel ? sel.toString().trim() : '';
+            switchCompanionTab('annotations');
+            toggleAnnotationForm(true);
+            const quoteField = document.getElementById('anno-quote-field');
+            if (quoteField) {
+                quoteField.value = text;
+                (text ? document.getElementById('anno-comment-field') : quoteField).focus();
+            }
+        }
+
+        function saveNewAnnotation(e) {
+            e.preventDefault();
+            if (!isCurator()) return;
+            const essay = getCurrentEssay();
+            if (!essay) return;
+
+            const quote = document.getElementById('anno-quote-field').value.trim();
+            const source = document.getElementById('anno-source-field').value.trim();
+            const tag = document.getElementById('anno-tag-field').value;
+            const comment = document.getElementById('anno-comment-field').value.trim();
+            if (!comment) return;
+
+            if (!Array.isArray(essay.annotations)) essay.annotations = [];
+            essay.annotations.unshift({
+                id: 'ann-' + Date.now(),
+                quote,
+                source,
+                tag,
+                comment
+            });
+
+            toggleAnnotationForm(false);
+            renderEssayAnnotations();
+            queueCloudSave();
+            showToast('Annotation inscribed');
+        }
+
+        function deleteAnnotation(annoId) {
+            if (!isCurator()) return;
+            const essay = getCurrentEssay();
+            if (!essay) return;
+            essay.annotations = (essay.annotations || []).filter(a => a.id !== annoId);
+            renderEssayAnnotations();
+            queueCloudSave();
+        }
+
+        function renderEssayAnnotations() {
+            const essay = getCurrentEssay();
+            const list = document.getElementById('studio-annotations-list');
+            const countBadge = document.getElementById('studio-anno-count');
+            if (!essay || !list) return;
+
+            const annos = essay.annotations || [];
+            if (countBadge) countBadge.textContent = annos.length;
+
+            if (annos.length === 0) {
+                list.innerHTML = `
+                    <div class="p-6 text-center border border-dashed border-[var(--border-primary)] rounded">
+                        <div class="font-display italic text-lg text-[var(--text-secondary)]">No marginalia inscribed yet.</div>
+                        <p class="font-mono text-[10px] text-[var(--text-muted)] mt-1">${isCurator() ? 'Highlight text in the essay and click "Cite Selection", or click "+ Add Annotation".' : 'Scholarly annotations appear here.'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = annos.map(a => `
+                <div class="p-3.5 rounded border border-[var(--border-primary)] bg-[var(--bg-primary)]/60 space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="px-2 py-0.5 rounded bg-[var(--accent-gold-dim)] border border-[var(--accent-gold)]/40 font-mono text-[10px] uppercase tracking-wider text-[var(--accent-gold-bright)]">
+                                ${escapeHTML(a.tag || 'Marginalia')}
+                            </span>
+                            ${a.source ? `<span class="font-mono text-[10px] text-[var(--text-muted)]">${escapeHTML(a.source)}</span>` : ''}
+                        </div>
+                        ${isCurator() ? `<button onclick="deleteAnnotation('${escapeHTML(a.id)}')" class="text-[var(--text-muted)] hover:text-[var(--accent-crimson)] transition" title="Remove Annotation"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>` : ''}
+                    </div>
+                    ${a.quote ? `<blockquote class="border-l-2 border-[var(--accent-gold)] pl-2.5 font-display italic text-sm text-[var(--text-secondary)]">“${escapeHTML(a.quote)}”</blockquote>` : ''}
+                    <p class="font-sans text-xs leading-relaxed text-[var(--text-primary)]">${escapeHTML(a.comment)}</p>
+                </div>
+            `).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function insertNoteTemplate() {
+            if (!isCurator()) return;
+            const essay = getCurrentEssay();
+            const textarea = document.getElementById('studio-notes-textarea');
+            if (!essay || !textarea) return;
+
+            const scaffold = `I. CENTRAL CLAIM\n• \n\nII. PRIMARY EVIDENCE & QUOTATIONS\n• \n\nIII. COUNTERARGUMENTS & REVISIONS\n• \n`;
+            textarea.value = textarea.value ? `${textarea.value}\n\n${scaffold}` : scaffold;
+            essay.notes = textarea.value;
+            updateNotesMetrics();
+            queueCloudSave();
+        }
+
+        /* =====================================================================
+           RICH TEXT FORMATTING TOOLBAR COMMANDS
+           ===================================================================== */
+        function execFormat(command, editorId) {
+            if (!isCurator()) return;
+            const editor = document.getElementById(editorId);
+            editor?.focus();
+            document.execCommand(command, false, null);
+            syncEditorContent(editorId);
+        }
+
+        function execBlock(tagName, editorId) {
+            if (!isCurator()) return;
+            const editor = document.getElementById(editorId);
+            editor?.focus();
+            document.execCommand('formatBlock', false, tagName);
+            syncEditorContent(editorId);
+        }
+
+        function insertDivider(editorId) {
+            if (!isCurator()) return;
+            const editor = document.getElementById(editorId);
+            editor?.focus();
+            document.execCommand('insertHorizontalRule', false, null);
+            syncEditorContent(editorId);
+        }
+
+        function syncEditorContent(editorId) {
+            if (!isCurator()) return;
+            const editor = document.getElementById(editorId);
+            if (!editor) return;
+
+            if (editorId === 'proposal-body-editor') {
+                archiveData.proposal.body = editor.innerHTML;
+                updateProposalMetrics();
+            } else if (editorId === 'essay-body-editor') {
+                const essay = getCurrentEssay();
+                if (essay) {
+                    essay.body = editor.innerHTML;
+                    updateEssayMetrics();
+                }
+            }
+            queueCloudSave();
+        }
+
+        /* =====================================================================
+           PUBLIC FILE UPLOADS (SUPABASE STORAGE BUCKET: archive-files)
+           ===================================================================== */
+        function formatBytes(bytes) {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+        }
+
+        async function handleFileUpload(event, targetScope) {
+            if (!isCurator()) return;
+            const files = Array.from(event.target.files || []);
+            if (files.length === 0) return;
+
+            const essay = targetScope === 'essay' ? getCurrentEssay() : null;
+            if (targetScope === 'essay' && !essay) return;
+
+            showToast(`Uploading ${files.length} file${files.length === 1 ? '' : 's'}...`);
+
+            for (const file of files) {
+                try {
+                    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                    const path = `${targetScope}/${Date.now()}_${safeName}`;
+
+                    const { error: uploadErr } = await sb.storage
+                        .from(STORAGE_BUCKET)
+                        .upload(path, file, { upsert: true });
+
+                    if (uploadErr) throw uploadErr;
+
+                    const { data: pubData } = sb.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+                    const fileEntry = {
+                        id: 'file-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                        name: file.name,
+                        size: file.size,
+                        type: file.type || 'application/octet-stream',
+                        path,
+                        url: pubData.publicUrl,
+                        uploadedAt: new Date().toISOString()
+                    };
+
+                    if (targetScope === 'proposal') {
+                        if (!Array.isArray(archiveData.proposal.files)) archiveData.proposal.files = [];
+                        archiveData.proposal.files.push(fileEntry);
+                    } else {
+                        if (!Array.isArray(essay.files)) essay.files = [];
+                        essay.files.push(fileEntry);
+                    }
+                } catch (err) {
+                    console.error('Upload error:', err);
+                    showToast(`Upload failed for ${file.name}: ${err.message || 'Check storage bucket SQL'}`);
+                }
+            }
+
+            event.target.value = '';
+            if (targetScope === 'proposal') renderProposalFiles();
+            else renderEssayFiles();
+            await saveToSupabaseNow();
+            showToast('File upload complete');
+        }
+
+        async function deleteUploadedFile(targetScope, fileId) {
+            if (!isCurator()) return;
+            const list = targetScope === 'proposal'
+                ? (archiveData.proposal.files || [])
+                : (getCurrentEssay()?.files || []);
+
+            const idx = list.findIndex(f => f.id === fileId);
+            if (idx === -1) return;
+            const [removed] = list.splice(idx, 1);
+
+            if (removed.path) {
+                try {
+                    await sb.storage.from(STORAGE_BUCKET).remove([removed.path]);
+                } catch (e) {
+                    console.warn('Storage delete warning:', e);
+                }
+            }
+
+            if (targetScope === 'proposal') renderProposalFiles();
+            else renderEssayFiles();
+            await saveToSupabaseNow();
+            showToast('File removed');
+        }
+
+        function renderFileCardHTML(file, scope) {
+            return `
+                <div class="p-3 rounded border border-[var(--border-primary)] bg-[var(--bg-surface)] flex items-center justify-between gap-3">
+                    <div class="min-w-0 flex items-center gap-2.5">
+                        <i data-lucide="file-text" class="w-4 h-4 text-[var(--accent-gold)] shrink-0"></i>
+                        <div class="min-w-0">
+                            <a href="${escapeHTML(file.url)}" target="_blank" rel="noopener noreferrer" class="block font-sans text-xs font-medium text-[var(--text-primary)] hover:text-[var(--accent-gold-bright)] truncate underline decoration-[var(--border-hover)]">
+                                ${escapeHTML(file.name)}
+                            </a>
+                            <span class="font-mono text-[10px] text-[var(--text-muted)]">${formatBytes(file.size)}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <a href="${escapeHTML(file.url)}" target="_blank" rel="noopener noreferrer" download="${escapeHTML(file.name)}" class="p-1.5 rounded border border-[var(--border-primary)] hover:border-[var(--accent-gold)] text-[var(--accent-gold)]" title="Open / Download">
+                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                        </a>
+                        ${isCurator() ? `<button onclick="deleteUploadedFile('${scope}', '${escapeHTML(file.id)}')" class="p-1.5 rounded border border-[var(--border-primary)] hover:border-[var(--accent-crimson)] text-[var(--text-muted)] hover:text-[var(--accent-crimson)]" title="Delete File"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProposalFiles() {
+            const container = document.getElementById('proposal-files-list');
+            if (!container) return;
+            const files = archiveData.proposal.files || [];
+            if (files.length === 0) {
+                container.innerHTML = `<div class="sm:col-span-2 p-4 rounded border border-dashed border-[var(--border-primary)] font-mono text-[11px] text-[var(--text-muted)] text-center">No proposal documents attached yet.</div>`;
+                return;
+            }
+            container.innerHTML = files.map(f => renderFileCardHTML(f, 'proposal')).join('');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderEssayFiles() {
+            const essay = getCurrentEssay();
+            const mainList = document.getElementById('essay-main-files-list');
+            const drawerList = document.getElementById('studio-drawer-files-list');
+            const countBadge = document.getElementById('studio-files-count');
+            if (!essay) return;
+
+            const files = essay.files || [];
+            if (countBadge) countBadge.textContent = files.length;
+
+            if (files.length === 0) {
+                const empty = `<div class="p-4 rounded border border-dashed border-[var(--border-primary)] font-mono text-[11px] text-[var(--text-muted)] text-center">No primary source files attached to this folio.</div>`;
+                if (mainList) mainList.innerHTML = `<div class="sm:col-span-2">${empty}</div>`;
+                if (drawerList) drawerList.innerHTML = empty;
+                return;
+            }
+
+            const cards = files.map(f => renderFileCardHTML(f, 'essay')).join('');
+            if (mainList) mainList.innerHTML = cards;
+            if (drawerList) drawerList.innerHTML = cards;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        /* =====================================================================
+           METRICS & ESCAPING HELPERS
+           ===================================================================== */
+        function countWordsHTML(html) {
+            const div = document.createElement('div');
+            div.innerHTML = html || '';
+            const txt = (div.textContent || div.innerText || '').trim();
+            return txt ? txt.split(/\s+/).filter(Boolean).length : 0;
+        }
+
+        function countWordsPlain(text) {
+            const txt = (text || '').trim();
+            return txt ? txt.split(/\s+/).filter(Boolean).length : 0;
+        }
+
+        function updateProposalMetrics() {
+            const words = countWordsHTML(archiveData.proposal.body) + countWordsPlain(archiveData.proposal.thesis);
+            document.getElementById('proposal-word-count').textContent = words;
+            document.getElementById('proposal-reading-time').textContent = `${Math.max(1, Math.ceil(words / 220))} min read`;
+        }
+
+        function updateEssayMetrics() {
+            const essay = getCurrentEssay();
+            if (!essay) return;
+            const words = countWordsHTML(essay.body);
+            document.getElementById('essay-word-count').textContent = words;
+            document.getElementById('essay-read-time').textContent = `${Math.max(1, Math.ceil(words / 220))}m`;
+            document.getElementById('public-essay-stats').textContent = `${words} words`;
+        }
+
+        function updateNotesMetrics() {
+            const essay = getCurrentEssay();
+            if (!essay) return;
+            const words = countWordsPlain(essay.notes);
+            document.getElementById('studio-notes-words').textContent = `${words}w`;
+        }
+
+        function escapeHTML(str) {
+            const d = document.createElement('div');
+            d.textContent = str || '';
+            return d.innerHTML;
+        }
+
+        /* =====================================================================
+           EXPORT & TOAST HELPERS
+           ===================================================================== */
+        function openExportModal() {
+            const m = document.getElementById('export-modal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        }
+
+        function closeExportModal() {
+            const m = document.getElementById('export-modal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function htmlToCleanMarkdown(html) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html || '';
+            let out = '';
+            tmp.childNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    out += node.textContent;
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                    const tag = node.tagName.toUpperCase();
+                    const text = node.textContent.trim();
+                    if (tag === 'HR') { out += `\n---\n\n`; return; }
+                    if (!text) return;
+                    if (tag === 'H2') out += `\n## ${text}\n\n`;
+                    else if (tag === 'H3') out += `\n### ${text}\n\n`;
+                    else if (tag === 'BLOCKQUOTE') out += `\n> ${text}\n\n`;
+                    else if (tag === 'UL') {
+                        node.querySelectorAll('li').forEach(li => out += `- ${li.textContent.trim()}\n`);
+                        out += '\n';
+                    } else if (tag === 'OL') {
+                        node.querySelectorAll('li').forEach((li, i) => out += `${i + 1}. ${li.textContent.trim()}\n`);
+                        out += '\n';
+                    } else {
+                        out += `${text}\n\n`;
+                    }
+                }
+            });
+            return out.trim();
+        }
+
+        function exportArchiveMarkdown() {
+            let md = `# THE PALIMPSEST — Cabinet of Curiosities & Illuminated Folios\n\n`;
+            md += `## PROJECT PROPOSAL: ${archiveData.proposal.title || 'Untitled'}\n`;
+            if (archiveData.proposal.subtitle) md += `*${archiveData.proposal.subtitle}*\n\n`;
+            if (archiveData.proposal.thesis) md += `> **Core Thesis:** ${archiveData.proposal.thesis}\n\n`;
+            md += `${htmlToCleanMarkdown(archiveData.proposal.body)}\n\n`;
+            if ((archiveData.proposal.files || []).length > 0) {
+                md += `### Attached Proposal Files\n`;
+                archiveData.proposal.files.forEach(f => (md += `- [${f.name}](${f.url})\n`));
+                md += `\n`;
+            }
+            md += `---\n\n`;
+
+            archiveData.essays.forEach((e, idx) => {
+                const roman = toRoman(idx + 1);
+                md += `## FOLIO ${roman}: ${e.title || 'Untitled'}\n`;
+                if (e.kicker) md += `**${e.kicker}**`;
+                if (e.subtitle) md += ` — *${e.subtitle}*`;
+                md += `\n\n${htmlToCleanMarkdown(e.body) || '*(No manuscript text inscribed)*'}\n\n`;
+
+                if ((e.annotations || []).length > 0) {
+                    md += `### Margin Annotations\n\n`;
+                    e.annotations.forEach(a => {
+                        md += `- **[${a.tag || 'Marginalia'}${a.source ? ` · ${a.source}` : ''}]** `;
+                        if (a.quote) md += `*"${a.quote}"* — `;
+                        md += `${a.comment}\n`;
+                    });
+                    md += `\n`;
+                }
+
+                if (e.notes && e.notes.trim()) {
+                    md += `### Research Notes\n\n${e.notes.trim()}\n\n`;
+                }
+
+                if ((e.files || []).length > 0) {
+                    md += `### Attached Files\n\n`;
+                    e.files.forEach(f => (md += `- [${f.name}](${f.url})\n`));
+                    md += `\n`;
+                }
+                md += `---\n\n`;
+            });
+
+            downloadBlob(md, 'the-palimpsest-codex.md', 'text/markdown;charset=utf-8');
+            closeExportModal();
+            showToast('Exported complete codex (.md)');
+        }
+
+        function exportArchiveJSON() {
+            downloadBlob(JSON.stringify(archiveData, null, 2), 'the-palimpsest-archive.json', 'application/json');
+            closeExportModal();
+            showToast('Exported JSON archive');
+        }
+
+        function downloadBlob(content, filename, mime) {
+            const blob = new Blob([content], { type: mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function showToast(message, showUndo = false) {
+            const banner = document.getElementById('toast-banner');
+            const msg = document.getElementById('toast-msg');
+            const undoBtn = document.getElementById('toast-undo-btn');
+            msg.textContent = message;
+            if (showUndo) undoBtn.classList.remove('hidden');
+            else undoBtn.classList.add('hidden');
+
+            banner.classList.remove('hidden');
+            banner.classList.add('flex');
+
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(hideToast, showUndo ? 6500 : 3500);
+        }
+
+        function hideToast() {
+            const banner = document.getElementById('toast-banner');
+            banner.classList.add('hidden');
+            banner.classList.remove('flex');
+        }
+
+        /* =====================================================================
+           INPUT EVENT BINDINGS
+           ===================================================================== */
+        function bindEditorListeners() {
+            document.getElementById('proposal-title-input').addEventListener('input', e => {
+                if (!isCurator()) return;
+                archiveData.proposal.title = e.target.value;
+                queueCloudSave();
+            });
+            document.getElementById('proposal-subtitle-input').addEventListener('input', e => {
+                if (!isCurator()) return;
+                archiveData.proposal.subtitle = e.target.value;
+                queueCloudSave();
+            });
+            document.getElementById('proposal-thesis-input').addEventListener('input', e => {
+                if (!isCurator()) return;
+                archiveData.proposal.thesis = e.target.value;
+                updateProposalMetrics();
+                queueCloudSave();
+            });
+            document.getElementById('proposal-body-editor').addEventListener('input', () => {
+                syncEditorContent('proposal-body-editor');
+            });
+
+            document.getElementById('essay-kicker-input').addEventListener('input', e => {
+                if (!isCurator()) return;
+                const essay = getCurrentEssay();
+                if (essay) { essay.kicker = e.target.value; queueCloudSave(); }
+            });
+            document.getElementById('essay-title-input').addEventListener('input', e => {
+                if (!isCurator()) return;
+                const essay = getCurrentEssay();
+                if (essay) { essay.title = e.target.value; queueCloudSave(); }
+            });
+            document.getElementById('essay-subtitle-input').addEventListener('input', e => {
+                if (!isCurator()) return;
+                const essay = getCurrentEssay();
+                if (essay) { essay.subtitle = e.target.value; queueCloudSave(); }
+            });
+            document.getElementById('essay-body-editor').addEventListener('input', () => {
+                syncEditorContent('essay-body-editor');
+            });
+            document.getElementById('studio-notes-textarea').addEventListener('input', e => {
+                if (!isCurator()) return;
+                const essay = getCurrentEssay();
+                if (essay) {
+                    essay.notes = e.target.value;
+                    updateNotesMetrics();
+                    queueCloudSave();
+                }
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
